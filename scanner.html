@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>QR AKTIF! — Scanner</title>
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+<style>
+*{box-sizing:border-box} body{margin:0;background:#101418;color:#fff;font-family:Arial,sans-serif}
+.wrap{max-width:560px;margin:auto;padding:18px}.card{background:#1b232c;border-radius:18px;padding:18px}
+h1{margin:0 0 8px;font-size:25px} p{color:#cbd5df}
+#reader{width:100%;margin:18px auto 12px;border-radius:16px;overflow:hidden;background:#000}
+button{width:100%;border:0;border-radius:12px;padding:14px;margin-top:10px;font-size:16px;font-weight:bold}
+#status{margin-top:12px;padding:12px;border-radius:10px;background:#253241}
+.ok{background:#164b2b!important}.err{background:#5a1e25!important}
+.hint{margin-top:12px;font-size:13px;color:#aebdca;line-height:1.45}
+</style>
+</head>
+<body>
+<div class="wrap"><div class="card">
+<h1>📷 QR AKTIF! — Scanner</h1>
+<p>Halakan kamera belakang iPhone kepada QR murid.</p>
+<div id="reader"></div>
+<div id="status">Memulakan kamera...</div>
+<button onclick="closeScanner()">✕ TUTUP SCANNER</button>
+<div class="hint">Jika iPhone meminta kebenaran kamera, pilih <b>Allow</b>. Scanner mesti dibuka melalui HTTPS.</div>
+</div></div>
+
+<script>
+let scanner=null, running=false, completed=false;
+
+function status(message,type){
+  const el=document.getElementById('status');
+  el.textContent=message;
+  el.className=type||'';
+}
+function extractId(text){
+  let value=String(text||'').trim();
+  try{
+    const url=new URL(value);
+    const id=url.searchParams.get('id');
+    if(id)value=id;
+  }catch(e){}
+  return value.trim().toUpperCase();
+}
+async function startCamera(){
+  if(typeof Html5Qrcode==='undefined'){
+    status('❌ Library QR gagal dimuat.','err'); return;
+  }
+  scanner=new Html5Qrcode('reader');
+  const config={
+    fps:10,
+    qrbox:function(w,h){
+      const s=Math.floor(Math.min(w,h)*0.72);
+      return {width:s,height:s};
+    },
+    aspectRatio:1.0
+  };
+  try{
+    await scanner.start(
+      {facingMode:'environment'},
+      config,
+      function(decodedText){
+        if(completed)return;
+        const id=extractId(decodedText);
+        if(!id){status('❌ QR tidak mengandungi ID murid.','err');return;}
+        completed=true;
+        status('✅ QR dibaca: '+id,'ok');
+        finishScan(id);
+      },
+      function(){}
+    );
+    running=true;
+    status('📷 Kamera aktif — halakan kepada QR murid.');
+  }catch(error){
+    console.error(error);
+    status('❌ Kamera tidak dapat dibuka. Pastikan Camera = Allow untuk laman scanner ini.','err');
+  }
+}
+async function finishScan(id){
+  try{
+    if(scanner&&running){await scanner.stop();running=false;}
+  }catch(e){}
+  if(window.opener&&!window.opener.closed){
+    window.opener.postMessage({type:'QR_SCANNED',id:id},window.location.origin);
+    setTimeout(function(){window.close();},300);
+  }else{
+    const params=new URLSearchParams(window.location.search);
+    const returnUrl=params.get('returnUrl');
+    if(returnUrl){
+      const sep=returnUrl.includes('?')?'&':'?';
+      window.location.href=returnUrl+sep+'id='+encodeURIComponent(id);
+    }
+  }
+}
+async function closeScanner(){
+  try{if(scanner&&running)await scanner.stop();}catch(e){}
+  running=false;
+  if(window.opener&&!window.opener.closed){
+    window.opener.postMessage({type:'QR_SCANNER_CLOSED'},window.location.origin);
+  }
+  window.close();
+}
+startCamera();
+</script>
+</body>
+</html>
