@@ -81,10 +81,38 @@ async function finishScan(id){
   try{
     if(scanner&&running){await scanner.stop();running=false;}
   }catch(e){}
-  if(window.opener&&!window.opener.closed){
-    window.opener.postMessage({type:'QR_SCANNED',id:id},window.location.origin);
-    setTimeout(function(){window.close();},300);
-  }else{
+if (window.opener && !window.opener.closed) {
+
+  const params = new URLSearchParams(window.location.search);
+  const returnOrigin = params.get('returnOrigin');
+
+  if (!returnOrigin) {
+    status(
+      '❌ Alamat kembali sistem tidak ditemui. Tutup scanner dan cuba semula.',
+      'err'
+    );
+    return;
+  }
+
+  // Hantar ID QR kepada QR AKTIF!
+  window.opener.postMessage(
+    {
+      type: 'QR_SCANNED',
+      id: id
+    },
+    returnOrigin
+  );
+
+  status(
+    '✅ Berjaya! Menghantar ID ' + id + ' kepada QR AKTIF...',
+    'ok'
+  );
+
+  setTimeout(function() {
+    window.close();
+  }, 500);
+
+}else{
     const params=new URLSearchParams(window.location.search);
     const returnUrl=params.get('returnUrl');
     if(returnUrl){
