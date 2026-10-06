@@ -409,38 +409,25 @@ async function finishScan(id) {
 ================================ */
 
 async function closeScanner() {
-
   try {
-
     if (scanner && running) {
-
       await scanner.stop();
-
     }
-
   } catch (e) {}
 
   running = false;
 
-  /*
-   * Kembali ke halaman asal jika ada
-   */
-
   const params =
-    new URLSearchParams(
-      window.location.search
-    );
+    new URLSearchParams(window.location.search);
 
   const returnUrl =
     params.get('returnUrl');
 
   if (returnUrl) {
-
-    window.location.href =
-      returnUrl;
-
+    window.location.replace(returnUrl);
+  } else {
+    window.history.back();
   }
-
 }
 
 
