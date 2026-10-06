@@ -112,6 +112,7 @@ button {
   </div>
 </div>
 
+```html
 <script>
 
 let scanner = null;
@@ -119,13 +120,14 @@ let running = false;
 let completed = false;
 
 
-/* ================================
+/* ==========================================
    STATUS
-================================ */
+========================================== */
 
 function status(message, type) {
 
-  const el = document.getElementById('status');
+  const el =
+    document.getElementById('status');
 
   el.textContent = message;
 
@@ -134,38 +136,59 @@ function status(message, type) {
 }
 
 
-/* ================================
-   DAPATKAN ID DARIPADA QR
-================================ */
+/* ==========================================
+   EKSTRAK ID DARIPADA QR
+========================================== */
 
 function extractId(text) {
 
-  let value = String(text || '').trim();
+  let value =
+    String(text || '').trim();
 
+
+  /*
+   * Jika QR mengandungi URL,
+   * cuba ambil ?id=
+   */
   try {
 
-    const url = new URL(value);
+    const url =
+      new URL(value);
 
-    const id = url.searchParams.get('id');
+    const id =
+      url.searchParams.get('id');
 
     if (id) {
       value = id;
     }
 
-  } catch (e) {}
+  } catch (e) {
 
-  return value.trim().toUpperCase();
+    /*
+     * Bukan URL.
+     * Anggap terus sebagai ID.
+     */
+
+  }
+
+
+  return value
+    .trim()
+    .toUpperCase();
 
 }
 
 
-/* ================================
+/* ==========================================
    MULAKAN KAMERA
-================================ */
+========================================== */
 
 async function startCamera() {
 
-  if (typeof Html5Qrcode === 'undefined') {
+  if (
+    typeof Html5Qrcode ===
+    'undefined'
+  ) {
 
     status(
       '❌ Library QR gagal dimuat.',
@@ -175,32 +198,35 @@ async function startCamera() {
     return;
   }
 
-  scanner = new Html5Qrcode('reader');
-
-  const config = {
-
-    fps: 10,
-
-    qrbox: function(width, height) {
-
-      const size =
-        Math.floor(
-          Math.min(width, height) * 0.72
-        );
-
-      return {
-        width: size,
-        height: size
-      };
-
-    },
-
-    aspectRatio: 1.0
-
-  };
-
 
   try {
+
+    scanner =
+      new Html5Qrcode('reader');
+
+
+    const config = {
+
+      fps: 10,
+
+      qrbox: function(width, height) {
+
+        const size =
+          Math.floor(
+            Math.min(width, height) * 0.72
+          );
+
+        return {
+          width: size,
+          height: size
+        };
+
+      },
+
+      aspectRatio: 1.0
+
+    };
+
 
     await scanner.start(
 
@@ -216,8 +242,10 @@ async function startCamera() {
           return;
         }
 
+
         const id =
           extractId(decodedText);
+
 
         if (!id) {
 
@@ -229,24 +257,51 @@ async function startCamera() {
           return;
         }
 
+
+        /*
+         * Pastikan ID mempunyai format
+         * seperti 6AG-001
+         */
+        if (
+          !/^(6AG|5AG|5AJ)-\d{3}$/i.test(id)
+        ) {
+
+          status(
+            '❌ QR dibaca tetapi ID tidak sah: ' +
+            id,
+            'err'
+          );
+
+          return;
+        }
+
+
         completed = true;
+
 
         status(
           '✅ QR dibaca: ' + id,
           'ok'
         );
 
+
         finishScan(id);
 
       },
 
-      function() {
-        // Abaikan frame yang belum berjaya dibaca.
+      function(errorMessage) {
+
+        /*
+         * Jangan paparkan setiap frame gagal.
+         */
+
       }
 
     );
 
+
     running = true;
+
 
     status(
       '📷 Kamera aktif — halakan kepada QR murid.'
@@ -256,10 +311,15 @@ async function startCamera() {
 
   catch (error) {
 
-    console.error(error);
+    console.error(
+      'Camera error:',
+      error
+    );
+
 
     status(
-      '❌ Kamera tidak dapat dibuka. Pastikan Camera = Allow.',
+      '❌ Kamera tidak dapat dibuka. ' +
+      'Pastikan Camera = Allow dan scanner dibuka melalui HTTPS.',
       'err'
     );
 
@@ -268,174 +328,213 @@ async function startCamera() {
 }
 
 
-/* ================================
-   SELEPAS QR BERJAYA DIBACA
-================================ */
+/* ==========================================
+   SELEPAS QR BERJAYA
+========================================== */
 
 async function finishScan(id) {
+
+  /*
+   * Hentikan kamera
+   */
   try {
-    if (scanner && running) {
+
+    if (
+      scanner &&
+      running
+    ) {
+
       await scanner.stop();
+
       running = false;
+
     }
-  } catch (e) {}
 
-  const params = new URLSearchParams(window.location.search);
-
-  const returnUrl = params.get('returnUrl');
-  const code = params.get('code');
-
-  if (!returnUrl || !code) {
-    status(
-      '❌ Maklumat kembali ke QR AKTIF tidak lengkap.',
-      'err'
-    );
-    return;
   }
 
-  let destination;
+  catch (e) {
 
-  try {
-    const url = new URL(returnUrl);
-
-    url.searchParams.set('id', id);
-    url.searchParams.set('code', code);
-
-    destination = url.toString();
-
-  } catch (e) {
-
-    status(
-      '❌ URL QR AKTIF tidak sah.',
-      'err'
+    console.log(
+      'Scanner stop:',
+      e
     );
 
-    return;
   }
 
-  status(
-    '✅ QR ' + id + ' berjaya dibaca. Kembali ke QR AKTIF...',
-    'ok'
-  );
 
-  setTimeout(function() {
-    window.location.replace(destination);
-  }, 500);
-}
+  /*
+   * Ambil parameter daripada URL Scanner.html
+   */
+  const params =
+    new URLSearchParams(
+      window.location.search
+    );
 
-  /* ================================
-     TIADA RETURN URL
-  ================================= */
 
+  const returnUrl =
+    params.get('returnUrl');
+
+
+  const code =
+    params.get('code');
+
+
+  /*
+   * Pastikan returnUrl wujud
+   */
   if (!returnUrl) {
 
     status(
-      '❌ URL QR AKTIF tidak ditemui. Sila buka scanner melalui sistem QR AKTIF!',
+      '❌ URL QR AKTIF tidak ditemui.',
       'err'
     );
 
     return;
-
   }
 
 
-  /* ================================
-     BINA URL KEMBALI
-  ================================= */
+  /*
+   * Pastikan callback code wujud
+   */
+  if (!code) {
 
-  let destination;
+    status(
+      '❌ Callback code tidak ditemui.',
+      'err'
+    );
 
+    return;
+  }
+
+
+  /*
+   * Bina URL kembali ke Apps Script
+   *
+   * ?id=6AG-001
+   * &code=XXXXXXXX
+   */
   try {
 
     const url =
       new URL(returnUrl);
 
-    /*
-     * ID murid dihantar sebagai:
-     *
-     * ?id=6AG-001
-     */
 
     url.searchParams.set(
       'id',
       id
     );
 
-    destination =
+
+    url.searchParams.set(
+      'code',
+      code
+    );
+
+
+    const destination =
       url.toString();
+
+
+    status(
+      '✅ QR ' +
+      id +
+      ' berjaya dibaca. Kembali ke QR AKTIF...',
+      'ok'
+    );
+
+
+    /*
+     * Beri masa supaya guru nampak
+     * mesej berjaya.
+     */
+    setTimeout(function() {
+
+      window.location.replace(
+        destination
+      );
+
+    }, 500);
 
   }
 
-  catch (e) {
+  catch (error) {
+
+    console.error(error);
 
     status(
       '❌ URL QR AKTIF tidak sah.',
       'err'
     );
 
-    return;
-
   }
-
-
-  /* ================================
-     PAPAR STATUS
-  ================================= */
-
-  status(
-    '✅ QR ' + id +
-    ' berjaya dibaca. Kembali ke QR AKTIF...',
-    'ok'
-  );
-
-
-  /*
-   * TUNGGU SEDIKIT SUPAYA GURU NAMPAK
-   * STATUS BERJAYA
-   */
-
-  setTimeout(function() {
-
-    window.location.href =
-      destination;
-
-  }, 500);
 
 }
 
 
-/* ================================
-   TUTUP
-================================ */
+/* ==========================================
+   TUTUP SCANNER
+========================================== */
 
 async function closeScanner() {
+
   try {
-    if (scanner && running) {
+
+    if (
+      scanner &&
+      running
+    ) {
+
       await scanner.stop();
+
     }
-  } catch (e) {}
+
+  }
+
+  catch (e) {}
+
 
   running = false;
 
+
   const params =
-    new URLSearchParams(window.location.search);
+    new URLSearchParams(
+      window.location.search
+    );
+
 
   const returnUrl =
     params.get('returnUrl');
 
+
   if (returnUrl) {
-    window.location.replace(returnUrl);
-  } else {
-    window.history.back();
+
+    window.location.replace(
+      returnUrl
+    );
+
   }
+
+  else {
+
+    window.history.back();
+
+  }
+
 }
 
 
-/* ================================
-   START
-================================ */
+/* ==========================================
+   MULAKAN
+========================================== */
 
-startCamera();
+window.addEventListener(
+  'load',
+  function() {
+
+    startCamera();
+
+  }
+);
 
 </script>
 
