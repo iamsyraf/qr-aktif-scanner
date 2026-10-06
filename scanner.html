@@ -1,540 +1,993 @@
 <!DOCTYPE html>
 <html lang="ms">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-<title>QR AKTIF! — Scanner</title>
+  <meta charset="UTF-8">
 
-<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
+  >
 
-<style>
-* {
-  box-sizing: border-box;
-}
+  <title>QR AKTIF! — Scanner</title>
 
-body {
-  margin: 0;
-  background: #101418;
-  color: #fff;
-  font-family: Arial, sans-serif;
-}
+  <!-- HTML5 QR CODE -->
+  <script
+    src="https://unpkg.com/html5-qrcode"
+    type="text/javascript">
+  </script>
 
-.wrap {
-  max-width: 560px;
-  margin: auto;
-  padding: 18px;
-}
+  <style>
 
-.card {
-  background: #1b232c;
-  border-radius: 18px;
-  padding: 18px;
-}
+    * {
+      box-sizing: border-box;
+    }
 
-h1 {
-  margin: 0 0 8px;
-  font-size: 25px;
-}
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #101820;
+      color: white;
+    }
 
-p {
-  color: #cbd5df;
-}
+    .container {
+      width: 100%;
+      max-width: 600px;
+      margin: auto;
+      padding: 18px;
+    }
 
-#reader {
-  width: 100%;
-  margin: 18px auto 12px;
-  border-radius: 16px;
-  overflow: hidden;
-  background: #000;
-}
+    .header {
+      text-align: center;
+      padding: 10px 5px 20px;
+    }
 
-button {
-  width: 100%;
-  border: 0;
-  border-radius: 12px;
-  padding: 14px;
-  margin-top: 10px;
-  font-size: 16px;
-  font-weight: bold;
-}
+    .header h1 {
+      margin: 0;
+      font-size: 28px;
+    }
 
-#status {
-  margin-top: 12px;
-  padding: 12px;
-  border-radius: 10px;
-  background: #253241;
-}
+    .header p {
+      margin: 7px 0 0;
+      color: #cbd5e1;
+    }
 
-.ok {
-  background: #164b2b !important;
-}
+    .scanner-card {
+      background: white;
+      color: #17202a;
+      border-radius: 20px;
+      padding: 15px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+    }
 
-.err {
-  background: #5a1e25 !important;
-}
+    #reader {
+      width: 100%;
+      overflow: hidden;
+      border-radius: 15px;
+      background: black;
+    }
 
-.hint {
-  margin-top: 12px;
-  font-size: 13px;
-  color: #aebdca;
-  line-height: 1.45;
-}
-</style>
+    #reader video {
+      border-radius: 15px;
+    }
+
+    .instruction {
+      background: #eef6ff;
+      color: #145a8d;
+      padding: 13px;
+      border-radius: 12px;
+      margin-bottom: 15px;
+      line-height: 1.5;
+    }
+
+    .status {
+      margin-top: 15px;
+      padding: 13px;
+      border-radius: 12px;
+      text-align: center;
+      font-weight: bold;
+      line-height: 1.4;
+    }
+
+    .status-info {
+      background: #eaf3fb;
+      color: #145a8d;
+    }
+
+    .status-success {
+      background: #e8f7ec;
+      color: #176b2c;
+    }
+
+    .status-error {
+      background: #fdecec;
+      color: #9b1c1c;
+    }
+
+    button {
+      width: 100%;
+      border: none;
+      border-radius: 12px;
+      padding: 14px;
+      margin-top: 12px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .retry-button {
+      background: #1769aa;
+      color: white;
+    }
+
+    .close-button {
+      background: #a61b1b;
+      color: white;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .footer {
+      text-align: center;
+      color: #94a3b8;
+      font-size: 13px;
+      margin-top: 20px;
+    }
+
+  </style>
+
 </head>
+
 
 <body>
 
-<div class="wrap">
-  <div class="card">
+<div class="container">
 
-    <h1>📷 QR AKTIF! — Scanner</h1>
+  <div class="header">
+
+    <h1>📷 QR AKTIF!</h1>
 
     <p>
-      Halakan kamera belakang iPhone kepada QR murid.
+      Scanner QR Murid
     </p>
+
+  </div>
+
+
+  <div class="scanner-card">
+
+    <div class="instruction">
+
+      <strong>Cara mengimbas:</strong>
+
+      <br>
+
+      1. Benarkan akses kamera.
+
+      <br>
+
+      2. Halakan kamera kepada QR murid.
+
+      <br>
+
+      3. Pastikan QR jelas di dalam kotak kamera.
+
+      <br>
+
+      4. Sistem akan membaca ID secara automatik.
+
+    </div>
+
 
     <div id="reader"></div>
 
-    <div id="status">
-      Memulakan kamera...
+
+    <div
+      id="status"
+      class="status status-info"
+    >
+      ⏳ Menyediakan kamera...
     </div>
 
-    <button onclick="closeScanner()">
-      ✕ TUTUP SCANNER
+
+    <button
+      id="retryButton"
+      class="retry-button hidden"
+      onclick="restartCamera()"
+    >
+      🔄 CUBA KAMERA SEMULA
     </button>
 
-    <div class="hint">
-      Jika iPhone meminta kebenaran kamera, pilih
-      <b>Allow</b>.
-    </div>
+
+    <button
+      class="close-button"
+      onclick="closeScanner()"
+    >
+      ✕ BATAL & KEMBALI
+    </button>
 
   </div>
+
+
+  <div class="footer">
+
+    Sistem Mata Aktiviti Murid
+    <br>
+    Sekolah Kebangsaan Cheras Jaya
+
+  </div>
+
 </div>
 
-```html
+
 <script>
 
-let scanner = null;
-let running = false;
-let completed = false;
+  /* =============================================
+     PEMBOLEH UBAH
+     ============================================= */
 
+  let scanner = null;
 
-/* ==========================================
-   STATUS
-========================================== */
+  let running = false;
 
-function status(message, type) {
+  let completed = false;
 
-  const el =
-    document.getElementById('status');
-
-  el.textContent = message;
-
-  el.className = type || '';
-
-}
-
-
-/* ==========================================
-   EKSTRAK ID DARIPADA QR
-========================================== */
-
-function extractId(text) {
-
-  let value =
-    String(text || '').trim();
+  let starting = false;
 
 
   /*
-   * Jika QR mengandungi URL,
-   * cuba ambil ?id=
+   * Data daripada Index.html
    */
-  try {
 
-    const url =
-      new URL(value);
-
-    const id =
-      url.searchParams.get('id');
-
-    if (id) {
-      value = id;
-    }
-
-  } catch (e) {
-
-    /*
-     * Bukan URL.
-     * Anggap terus sebagai ID.
-     */
-
-  }
-
-
-  return value
-    .trim()
-    .toUpperCase();
-
-}
-
-
-/* ==========================================
-   MULAKAN KAMERA
-========================================== */
-
-async function startCamera() {
-
-  if (
-    typeof Html5Qrcode ===
-    'undefined'
-  ) {
-
-    status(
-      '❌ Library QR gagal dimuat.',
-      'err'
+  const params =
+    new URLSearchParams(
+      window.location.search
     );
 
-    return;
+
+  const returnUrl =
+    params.get(
+      'returnUrl'
+    );
+
+
+  const callbackCode =
+    params.get(
+      'code'
+    );
+
+
+  /* =============================================
+     PAPAR STATUS
+     ============================================= */
+
+  function showStatus(
+    message,
+    type
+  ) {
+
+    const element =
+      document.getElementById(
+        'status'
+      );
+
+
+    element.textContent =
+      message;
+
+
+    element.className =
+      'status';
+
+
+    if (
+      type === 'success'
+    ) {
+
+      element.classList.add(
+        'status-success'
+      );
+
+    }
+
+    else if (
+      type === 'error'
+    ) {
+
+      element.classList.add(
+        'status-error'
+      );
+
+    }
+
+    else {
+
+      element.classList.add(
+        'status-info'
+      );
+
+    }
+
   }
 
 
-  try {
+  /* =============================================
+     DAPATKAN ID DARIPADA QR
+     ============================================= */
 
-    scanner =
-      new Html5Qrcode('reader');
+  function extractId(
+    decodedText
+  ) {
 
-
-    const config = {
-
-      fps: 10,
-
-      qrbox: function(width, height) {
-
-        const size =
-          Math.floor(
-            Math.min(width, height) * 0.72
-          );
-
-        return {
-          width: size,
-          height: size
-        };
-
-      },
-
-      aspectRatio: 1.0
-
-    };
+    let text =
+      String(
+        decodedText || ''
+      )
+        .trim();
 
 
-    await scanner.start(
-
-      {
-        facingMode: 'environment'
-      },
-
-      config,
-
-      function(decodedText) {
-
-        if (completed) {
-          return;
-        }
+    if (!text) {
+      return '';
+    }
 
 
-        const id =
-          extractId(decodedText);
+    /*
+     * Jika QR mengandungi URL:
+     *
+     * https://xxxx?id=6AG-001
+     */
+
+    try {
+
+      const url =
+        new URL(text);
 
 
-        if (!id) {
-
-          status(
-            '❌ QR tidak mengandungi ID murid.',
-            'err'
-          );
-
-          return;
-        }
-
-
-        /*
-         * Pastikan ID mempunyai format
-         * seperti 6AG-001
-         */
-        if (
-          !/^(6AG|5AG|5AJ)-\d{3}$/i.test(id)
-        ) {
-
-          status(
-            '❌ QR dibaca tetapi ID tidak sah: ' +
-            id,
-            'err'
-          );
-
-          return;
-        }
-
-
-        completed = true;
-
-
-        status(
-          '✅ QR dibaca: ' + id,
-          'ok'
+      const id =
+        url.searchParams.get(
+          'id'
         );
 
 
-        finishScan(id);
+      if (id) {
 
-      },
-
-      function(errorMessage) {
-
-        /*
-         * Jangan paparkan setiap frame gagal.
-         */
+        return String(id)
+          .trim()
+          .toUpperCase();
 
       }
 
-    );
+    }
+
+    catch (error) {
+
+      /*
+       * Bukan URL.
+       * Terus gunakan teks QR.
+       */
+
+    }
 
 
-    running = true;
+    /*
+     * QR biasa:
+     *
+     * 6AG-001
+     */
 
-
-    status(
-      '📷 Kamera aktif — halakan kepada QR murid.'
-    );
-
-  }
-
-  catch (error) {
-
-    console.error(
-      'Camera error:',
-      error
-    );
-
-
-    status(
-      '❌ Kamera tidak dapat dibuka. ' +
-      'Pastikan Camera = Allow dan scanner dibuka melalui HTTPS.',
-      'err'
-    );
+    return text
+      .trim()
+      .toUpperCase();
 
   }
 
-}
+
+  /* =============================================
+     VALIDASI ID MURID
+     ============================================= */
+
+  function isValidStudentId(
+    id
+  ) {
+
+    /*
+     * Format yang diterima:
+     *
+     * 6AG-001
+     * 5AG-001
+     * 5AJ-001
+     *
+     * 001 hingga 999 diterima pada scanner.
+     * Google Apps Script akan buat semakan
+     * sebenar dalam Sheet MURID.
+     */
+
+    return /^(6AG|5AG|5AJ)-\d{3}$/i
+      .test(
+        String(id || '')
+          .trim()
+      );
+
+  }
 
 
-/* ==========================================
-   SELEPAS QR BERJAYA
-========================================== */
+  /* =============================================
+     MULAKAN KAMERA
+     ============================================= */
 
-async function finishScan(id) {
-
-  /*
-   * Hentikan kamera
-   */
-  try {
+  async function startCamera() {
 
     if (
-      scanner &&
-      running
+      starting ||
+      running ||
+      completed
     ) {
 
-      await scanner.stop();
+      return;
+
+    }
+
+
+    /*
+     * Pastikan URL callback lengkap.
+     */
+
+    if (
+      !returnUrl ||
+      !callbackCode
+    ) {
+
+      showStatus(
+        '❌ Maklumat scanner tidak lengkap. Sila kembali ke QR AKTIF dan tekan SCAN QR semula.',
+        'error'
+      );
+
+
+      document
+        .getElementById(
+          'retryButton'
+        )
+        .classList
+        .add('hidden');
+
+
+      return;
+    }
+
+
+    /*
+     * Pastikan library berjaya dimuatkan.
+     */
+
+    if (
+      typeof Html5Qrcode ===
+      'undefined'
+    ) {
+
+      showStatus(
+        '❌ Library QR tidak dapat dimuatkan. Semak sambungan Internet dan cuba semula.',
+        'error'
+      );
+
+
+      document
+        .getElementById(
+          'retryButton'
+        )
+        .classList
+        .remove('hidden');
+
+
+      return;
+    }
+
+
+    starting = true;
+
+
+    document
+      .getElementById(
+        'retryButton'
+      )
+      .classList
+      .add('hidden');
+
+
+    showStatus(
+      '📷 Meminta akses kamera...',
+      'info'
+    );
+
+
+    try {
+
+      scanner =
+        new Html5Qrcode(
+          'reader'
+        );
+
+
+      /*
+       * Cuba gunakan kamera belakang.
+       */
+
+      await scanner.start(
+
+        {
+          facingMode: {
+            ideal: 'environment'
+          }
+        },
+
+        {
+          fps: 10,
+
+          qrbox: function(
+            viewfinderWidth,
+            viewfinderHeight
+          ) {
+
+            const minimum =
+              Math.min(
+                viewfinderWidth,
+                viewfinderHeight
+              );
+
+
+            const size =
+              Math.floor(
+                minimum * 0.72
+              );
+
+
+            return {
+              width: size,
+              height: size
+            };
+
+          },
+
+          aspectRatio: 1.0
+
+        },
+
+
+        /*
+         * QR berjaya dibaca.
+         */
+
+        function(
+          decodedText
+        ) {
+
+          handleSuccessfulScan(
+            decodedText
+          );
+
+        },
+
+
+        /*
+         * QR belum dijumpai.
+         *
+         * Jangan papar error kerana callback
+         * ini berlaku berkali-kali ketika
+         * kamera sedang mencari QR.
+         */
+
+        function(
+          errorMessage
+        ) {
+
+          // Abaikan.
+
+        }
+
+      );
+
+
+      running = true;
+
+      starting = false;
+
+
+      showStatus(
+        '📷 Kamera aktif. Halakan kepada QR murid.',
+        'info'
+      );
+
+    }
+
+    catch (error) {
+
+      starting = false;
 
       running = false;
+
+
+      console.error(
+        'Camera error:',
+        error
+      );
+
+
+      showStatus(
+        '❌ Kamera tidak dapat dibuka. Pastikan kebenaran kamera telah diberikan kepada browser.',
+        'error'
+      );
+
+
+      document
+        .getElementById(
+          'retryButton'
+        )
+        .classList
+        .remove('hidden');
 
     }
 
   }
 
-  catch (e) {
 
-    console.log(
-      'Scanner stop:',
-      e
-    );
+  /* =============================================
+     QR BERJAYA
+     ============================================= */
 
-  }
+  async function handleSuccessfulScan(
+    decodedText
+  ) {
 
+    /*
+     * Elakkan QR yang sama diproses
+     * berkali-kali.
+     */
 
-  /*
-   * Ambil parameter daripada URL Scanner.html
-   */
-  const params =
-    new URLSearchParams(
-      window.location.search
-    );
-
-
-  const returnUrl =
-    params.get('returnUrl');
+    if (completed) {
+      return;
+    }
 
 
-  const code =
-    params.get('code');
+    const studentId =
+      extractId(
+        decodedText
+      );
 
 
-  /*
-   * Pastikan returnUrl wujud
-   */
-  if (!returnUrl) {
+    if (!studentId) {
 
-    status(
-      '❌ URL QR AKTIF tidak ditemui.',
-      'err'
-    );
+      showStatus(
+        '❌ QR tidak mengandungi ID murid.',
+        'error'
+      );
 
-    return;
-  }
+      return;
+    }
 
 
-  /*
-   * Pastikan callback code wujud
-   */
-  if (!code) {
+    /*
+     * Elakkan QR rawak / bukan QR murid.
+     */
 
-    status(
-      '❌ Callback code tidak ditemui.',
-      'err'
-    );
+    if (
+      !isValidStudentId(
+        studentId
+      )
+    ) {
 
-    return;
-  }
+      showStatus(
+        '⚠️ QR bukan ID murid QR AKTIF. Sila imbas QR murid yang betul.',
+        'error'
+      );
 
-
-  /*
-   * Bina URL kembali ke Apps Script
-   *
-   * ?id=6AG-001
-   * &code=XXXXXXXX
-   */
-  try {
-
-    const url =
-      new URL(returnUrl);
+      return;
+    }
 
 
-    url.searchParams.set(
-      'id',
-      id
-    );
+    /*
+     * Kunci scanner.
+     */
+
+    completed = true;
 
 
-    url.searchParams.set(
-      'code',
-      code
-    );
-
-
-    const destination =
-      url.toString();
-
-
-    status(
-      '✅ QR ' +
-      id +
-      ' berjaya dibaca. Kembali ke QR AKTIF...',
-      'ok'
+    showStatus(
+      '✅ QR berjaya dibaca: ' +
+      studentId,
+      'success'
     );
 
 
     /*
-     * Beri masa supaya guru nampak
-     * mesej berjaya.
+     * Hentikan kamera.
      */
-    setTimeout(function() {
 
-      window.location.replace(
-        destination
+    await stopCamera();
+
+
+    /*
+     * Hantar:
+     *
+     * id = ID murid
+     * code = callback keselamatan
+     *
+     * Code.gs akan tukarkan code kepada
+     * sessionToken guru.
+     */
+
+    try {
+
+      const destination =
+        new URL(
+          returnUrl
+        );
+
+
+      destination
+        .searchParams
+        .set(
+          'id',
+          studentId
+        );
+
+
+      destination
+        .searchParams
+        .set(
+          'code',
+          callbackCode
+        );
+
+
+      showStatus(
+        '✅ ' +
+        studentId +
+        ' dikesan. Kembali ke QR AKTIF...',
+        'success'
       );
 
-    }, 500);
 
-  }
+      /*
+       * Beri sedikit masa supaya guru
+       * nampak mesej berjaya.
+       */
 
-  catch (error) {
+      setTimeout(
+        function() {
 
-    console.error(error);
+          window.location.replace(
+            destination.toString()
+          );
 
-    status(
-      '❌ URL QR AKTIF tidak sah.',
-      'err'
-    );
+        },
+        500
+      );
 
-  }
+    }
 
-}
+    catch (error) {
+
+      console.error(
+        'Return URL error:',
+        error
+      );
 
 
-/* ==========================================
-   TUTUP SCANNER
-========================================== */
+      completed = false;
 
-async function closeScanner() {
 
-  try {
-
-    if (
-      scanner &&
-      running
-    ) {
-
-      await scanner.stop();
+      showStatus(
+        '❌ Tidak dapat kembali ke QR AKTIF. Sila tekan BATAL & KEMBALI dan cuba semula.',
+        'error'
+      );
 
     }
 
   }
 
-  catch (e) {}
+
+  /* =============================================
+     HENTIKAN KAMERA
+     ============================================= */
+
+  async function stopCamera() {
+
+    if (!scanner) {
+
+      running = false;
+
+      return;
+
+    }
 
 
-  running = false;
+    if (running) {
+
+      try {
+
+        await scanner.stop();
+
+      }
+
+      catch (error) {
+
+        console.log(
+          'Stop camera:',
+          error
+        );
+
+      }
+
+    }
 
 
-  const params =
-    new URLSearchParams(
-      window.location.search
-    );
+    running = false;
 
 
-  const returnUrl =
-    params.get('returnUrl');
+    try {
 
+      scanner.clear();
 
-  if (returnUrl) {
+    }
 
-    window.location.replace(
-      returnUrl
-    );
+    catch (error) {
+
+      // Abaikan.
+
+    }
 
   }
 
-  else {
 
-    window.history.back();
+  /* =============================================
+     CUBA SEMULA
+     ============================================= */
 
-  }
+  async function restartCamera() {
 
-}
+    completed = false;
+
+    starting = false;
 
 
-/* ==========================================
-   MULAKAN
-========================================== */
+    await stopCamera();
 
-window.addEventListener(
-  'load',
-  function() {
+
+    scanner = null;
+
+
+    const reader =
+      document.getElementById(
+        'reader'
+      );
+
+
+    reader.innerHTML = '';
+
 
     startCamera();
 
   }
-);
+
+
+  /* =============================================
+     BATAL / KEMBALI
+     ============================================= */
+
+  async function closeScanner() {
+
+    completed = true;
+
+
+    showStatus(
+      '⏳ Kembali ke QR AKTIF...',
+      'info'
+    );
+
+
+    await stopCamera();
+
+
+    if (returnUrl) {
+
+      try {
+
+        const destination =
+          new URL(
+            returnUrl
+          );
+
+
+        /*
+         * Tidak hantar id/code apabila
+         * pengguna membatalkan scan.
+         */
+
+        window.location.replace(
+          destination.toString()
+        );
+
+
+        return;
+
+      }
+
+      catch (error) {
+
+        console.error(
+          error
+        );
+
+      }
+
+    }
+
+
+    /*
+     * Fallback jika tiada returnUrl.
+     */
+
+    if (
+      window.history.length > 1
+    ) {
+
+      window.history.back();
+
+    }
+
+    else {
+
+      showStatus(
+        'Scanner telah ditutup. Anda boleh menutup tab ini.',
+        'info'
+      );
+
+    }
+
+  }
+
+
+  /* =============================================
+     BERSIHKAN KAMERA JIKA HALAMAN DITUTUP
+     ============================================= */
+
+  window.addEventListener(
+    'pagehide',
+    function() {
+
+      if (
+        scanner &&
+        running
+      ) {
+
+        try {
+
+          scanner.stop();
+
+        }
+
+        catch (error) {}
+
+      }
+
+    }
+  );
+
+
+  /* =============================================
+     MULA
+     ============================================= */
+
+  window.addEventListener(
+    'load',
+    function() {
+
+      startCamera();
+
+    }
+  );
 
 </script>
 
